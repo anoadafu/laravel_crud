@@ -23,7 +23,7 @@
     <div id="app">
         <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
             <div class="container">
-                <a class="navbar-brand" href="{{ url('/') }}">
+                <a class="navbar-brand" href="{{ url('/images') }}">
                     {{ config('app.name', 'Laravel') }}
                 </a>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{{ __('Toggle navigation') }}">
@@ -73,6 +73,22 @@
         </nav>
 
         <main class="py-4">
+                @if (session('status'))
+                    <div class="container">
+                        <div class="alert alert-success" role="alert">
+                            {{ session('status') }}
+                        </div>
+                    </div>
+                @endif
+                @if ($errors->any())
+                    <div class="container">
+                        @foreach($errors->all() as $error)
+                            <div class="alert alert-danger" role="alert">
+                                {{ $error }}
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
             @yield('content')
         </main>
     </div>
