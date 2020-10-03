@@ -4,8 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Image;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
+use Intervention\Image\ImageManagerStatic as ImageIntervention;
 
 class ImageController extends Controller
 {
@@ -49,7 +48,13 @@ class ImageController extends Controller
 
         // Save uploaded file to local storage
         $file = $request->file('image');
-        $storage_path = $file->store('public/images_storage');
+        $storage_path = $file->storePublicly('images');
+
+        // Create thumb using logic (name of stored image + _thumb + .extention)
+        $thumb_path = storage_path('app/public/images/' . explode('.', $file->hashName())[0] . '_thumb.' . $file->extension());
+        $thumb = ImageIntervention::make($file->path());
+        $thumb->fit(350, 240);
+        $thumb->save($thumb_path);
 
         // Store image data to DB
         $image = new Image([
@@ -136,5 +141,12 @@ class ImageController extends Controller
         $image->delete();
         
         return redirect('/')->with('status', 'Image Removed');
+    }
+
+    public function search(Request $request)
+    {
+        $images = Image::where('title', 'LIKE', '%'. $request->q .'%' )->paginate (10);
+
+        return view('search')->with('images', $images);
     }
 }

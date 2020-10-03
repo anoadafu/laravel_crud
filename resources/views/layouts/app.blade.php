@@ -26,6 +26,7 @@
                 <a class="navbar-brand" href="{{ url('/images') }}">
                     {{ config('app.name', 'Laravel') }}
                 </a>
+                
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{{ __('Toggle navigation') }}">
                     <span class="navbar-toggler-icon"></span>
                 </button>
@@ -38,6 +39,14 @@
 
                     <!-- Right Side Of Navbar -->
                     <ul class="navbar-nav ml-auto">
+                        <li>
+                            <form action="/images/search" method="POST" role="search">
+                                @csrf
+                                <div class="input-group">
+                                    <input type="text" class="form-control" name="q" placeholder="Search by title">
+                                </div>
+                            </form>
+                        </li>
                         <!-- Authentication Links -->
                         @guest
                             <li class="nav-item">
@@ -69,7 +78,9 @@
                         @endguest
                     </ul>
                 </div>
+                
             </div>
+            
         </nav>
 
         <main class="py-4">
