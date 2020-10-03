@@ -8,7 +8,7 @@
         @foreach($images as $image)
             <div class="col-md-4 pb-4">
                 <div class="card">
-                    <img class="card-img-top image-height" src="{{ asset('storage/' . $image->thumb_file()) }}" alt="Image">
+                    <img class="card-img-top image-height" src="{{ $image->thumb_url() }}" alt="Image">
                     <div class="card-body">
                         <h5 class="card-title">{{ $image->title }}</h5>
                         <p class="card-text text-muted">{{ $image->category }}</p>

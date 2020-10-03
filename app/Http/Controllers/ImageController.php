@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Image;
 use Illuminate\Http\Request;
-use Intervention\Image\ImageManagerStatic as ImageIntervention;
+use Illuminate\Support\Facades\Storage;
 
 class ImageController extends Controller
 {
@@ -16,7 +16,7 @@ class ImageController extends Controller
     public function index()
     {
         // Add pagination if render more than 10 images
-        $images = Image::orderBy('created_at','desc')->paginate(10);
+        $images = Image::orderBy('created_at','desc')->paginate(12);
 
         return view('index')->with(compact('images'));
     }
@@ -48,13 +48,7 @@ class ImageController extends Controller
 
         // Save uploaded file to local storage
         $file = $request->file('image');
-        $storage_path = $file->storePublicly('images');
-
-        // Create thumb using logic (name of stored image + _thumb + .extention)
-        $thumb_path = storage_path('app/public/images/' . explode('.', $file->hashName())[0] . '_thumb.' . $file->extension());
-        $thumb = ImageIntervention::make($file->path());
-        $thumb->fit(350, 240);
-        $thumb->save($thumb_path);
+        $storage_path = Storage::disk('public')->put('images', $file);
 
         // Store image data to DB
         $image = new Image([
@@ -65,7 +59,9 @@ class ImageController extends Controller
         ]);
         $image->save();
 
-        return redirect('/')->with('status', 'Image Added');
+        $image->create_thumb();
+
+        return redirect('images')->with('status', 'Image Added');
     }
 
     /**
@@ -118,7 +114,7 @@ class ImageController extends Controller
 
         $image->save();
 
-        return redirect('/')->with('status', 'Image Edited');
+        return redirect('images')->with('status', 'Image Edited');
     }
 
     /**
@@ -136,17 +132,21 @@ class ImageController extends Controller
             return redirect('/')->with('error', 'No Such Image');
         }
 
-        // Delete Image
-        Storage::delete($image->storage_path);
+        // Delete Image inctance, image file  and image thumb
         $image->delete();
-        
-        return redirect('/')->with('status', 'Image Removed');
-    }
 
+        return redirect('images')->with('status', 'Image Removed');
+    }
+    /**
+     * Perform search query by title.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
     public function search(Request $request)
     {
-        $images = Image::where('title', 'LIKE', '%'. $request->q .'%' )->paginate (10);
+        $images = Image::where('title', 'LIKE', '%'. $request->q .'%' )->paginate (12);
 
-        return view('search')->with('images', $images);
+        return view('search')->with(['images' => $images, 'search_query' => $request->q]);
     }
 }
