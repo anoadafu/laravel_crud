@@ -17,7 +17,7 @@ Route::get('/', function () {
     return redirect('images');
 });
 
-Auth::routes();
+// Auth::routes();
 
 Route::get('home', 'HomeController@index')->name('home');
 Route::get('images/search', 'ImageController@search');
