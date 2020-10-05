@@ -1,12 +1,13 @@
-@extends('layouts.app')
+{% extends "layouts.app" %}
 
-@section('title') {{ config('app.name', 'Laravel') }} - Create New @endsection
+{% block title %} {{ config('app.name', 'Laravel') }} - Create New {% endblock %}
 
-@section('content')
+{% block content %}
+
 <div class="container">
     <div class="bd-content">
     <form method="POST" action="/images" enctype="multipart/form-data">
-        @csrf
+        {{ csrf_field() }}
         <div class="form-group">
             <label for="image">Image</label>
             <input type="file" class="form-control-file" id="image" name="image" required>
@@ -30,4 +31,4 @@
     </form>
 </div>
 </div>
-@endsection
+{% endblock %}

@@ -17,7 +17,9 @@
         "laravel-doctrine/orm": "1.6.*",
         "laravel/framework": "^7.24",
         "laravel/tinker": "^2.0",
-        "laravel/ui": "^2.4"
+        "laravel/ui": "^2.4",
+        "rcrowe/twigbridge": "^0.12.2",
+        "twig/twig": "^2.0"
     },
     "require-dev": {
         "facade/ignition": "^2.0",

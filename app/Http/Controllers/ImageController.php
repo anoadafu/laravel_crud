@@ -198,7 +198,7 @@ class ImageController extends Controller
         ]);
 
         // Get serched Images
-        $query = $this->em->createQuery('SELECT i FROM App\Entities\Image i WHERE i.title LIKE :q');
+        $query = $this->em->createQuery('SELECT i FROM App\Entities\Image i WHERE i.title LIKE :q ORDER BY i.id DESC');
         $query->setParameter('q', '%' . $request->q . '%');
         $searched_images = $query->getResult();
         
