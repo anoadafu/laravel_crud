@@ -166,6 +166,7 @@ return [
          * Package Service Providers...
          */
         Intervention\Image\ImageServiceProvider::class,
+        LaravelDoctrine\ORM\DoctrineServiceProvider::class,
 
         /*
          * Application Service Providers...
@@ -229,7 +230,9 @@ return [
         'View' => Illuminate\Support\Facades\View::class,
 
         'ImageIntervention' => Intervention\Image\Facades\Image::class,
-
+        'EntityManager' => LaravelDoctrine\ORM\Facades\EntityManager::class,
+        'Registry'      => LaravelDoctrine\ORM\Facades\Registry::class,
+        'Doctrine'      => LaravelDoctrine\ORM\Facades\Doctrine::class,
     ],
 
 ];

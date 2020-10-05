@@ -7,7 +7,7 @@
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Laravel') }}</title>
+    <title>@yield('title')</title>
 
     <!-- Scripts -->
     <script src="{{ asset('js/app.js') }}" defer></script>
@@ -40,10 +40,9 @@
                     <!-- Right Side Of Navbar -->
                     <ul class="navbar-nav ml-auto">
                         <li>
-                            <form action="/images/search" method="POST" role="search">
-                                @csrf
+                            <form action="/images/search" method="GET" role="search">
                                 <div class="input-group">
-                                    <input type="text" class="form-control" name="q" placeholder="Search by title">
+                                    <input type="text" class="form-control" id="q" name="q" placeholder="Search by title" required>
                                 </div>
                             </form>
                         </li>

@@ -1,22 +1,27 @@
 @extends('layouts.app')
 
+@section('title') {{ config('app.name', 'Laravel') }} - Main @endsection
+
 @section('content')
 <div class="container">
 
     <div class="row justify-content-start pb-4">
+        {{$paginator->links()}}
+    </div>
+    <div class="row justify-content-start pb-4">
         
-        @foreach($images as $image)
+        @foreach($paginator as $image)
             <div class="col-md-4 pb-4">
                 <div class="card">
                     <img class="card-img-top image-height" src="{{ $image->thumb_url() }}" alt="Image">
                     <div class="card-body">
-                        <h5 class="card-title">{{ $image->title }}</h5>
-                        <p class="card-text text-muted">{{ $image->category }}</p>
-                        <p class="card-text">{{ Str::words($image->description, $words = 15, $end='...') }}</p>
+                        <h5 class="card-title">{{ $image->getTitle() }}</h5>
+                        <p class="card-text text-muted">{{ $image->getCategory() }}</p>
+                        <p class="card-text">{{ Str::words($image->getDescription(), $words = 15, $end='...') }}</p>
                         <div class="row">
-                            <a href="/images/{{ $image->id }}" class="btn btn-secondary m-1">View</a>
-                            <a href="/images/{{ $image->id }}/edit" class="btn btn-primary m-1">Edit</a>
-                            <form method="POST" action="/images/{{ $image->id }}">
+                            <a href="/images/{{ $image->getId() }}" class="btn btn-secondary m-1">View</a>
+                            <a href="/images/{{ $image->getId() }}/edit" class="btn btn-primary m-1">Edit</a>
+                            <form method="POST" action="/images/{{ $image->getId() }}">
                                 @method('delete')
                                 @csrf
                                 <button class="btn btn-danger m-1">Delete</button>
@@ -27,9 +32,7 @@
             </div>
         @endforeach
     </div>
-    <div class="row justify-content-center pb-4">
-        {{$images->links()}}
-    </div>
+    
     <div class="row justify-content-center pb-4">
         <div class="col-md-4">
             <a href="/images/create" class="btn btn-primary btn-block">

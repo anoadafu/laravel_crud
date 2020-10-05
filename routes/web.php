@@ -20,5 +20,5 @@ Route::get('/', function () {
 Auth::routes();
 
 Route::get('home', 'HomeController@index')->name('home');
+Route::get('images/search', 'ImageController@search');
 Route::resource('images', 'ImageController');
-Route::post('images/search', 'ImageController@search');

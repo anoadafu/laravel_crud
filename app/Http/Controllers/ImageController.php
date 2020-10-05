@@ -2,23 +2,59 @@
 
 namespace App\Http\Controllers;
 
-use App\Image;
+use App\Entities\Image;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Doctrine\ORM\EntityManagerInterface;
+use Illuminate\Pagination\LengthAwarePaginator as Paginator;
 
 class ImageController extends Controller
 {
+    protected $em;
+
+    public function __construct(EntityManagerInterface $em)
+    {
+        $this->em = $em;
+    }
+
     /**
      * Display a listing of the resource.
-     *
+     * @param  array  $items
+     * @param  int  $results_per_page
+     * @param  int  $requested_page
+     * @param  array  $options (path, query, fragment, pageName)
+     * 
+     * @return Illuminate\Pagination\LengthAwarePaginator
+     */
+    private function get_paginatior($items, $results_per_page, $requested_page, array $options = [])
+    {
+        // Prepare slice for pagination
+        $requested_page = is_null($requested_page) ? 1 : $requested_page;
+        $offset = $results_per_page * ($requested_page -1);
+        $c = count($items);
+        $items_slice = array_slice($items, $offset, $results_per_page);
+
+        return new Paginator($items_slice, $c, $results_per_page, $requested_page, $options);
+    }
+
+    /**
+     * Display a listing of the resource.
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $results_per_page
+     * 
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request, $results_per_page = 6)
     {
-        // Add pagination if render more than 10 images
-        $images = Image::orderBy('created_at','desc')->paginate(12);
+        $request->validate([
+            'page' => 'nullable|integer'
+        ]);
+        //Get all Images
+        $images = $this->em->getRepository(Image::class)->findBy([], ['id' => 'DESC']);
+        
+        // Add pagination if render more than results_per_page Images
+        $paginator = $this->get_paginatior($images, $results_per_page, $request->page, ['path' => 'images']);
 
-        return view('index')->with(compact('images'));
+        return view('images/index', ['paginator' => $paginator]);
     }
 
     /**
@@ -28,13 +64,14 @@ class ImageController extends Controller
      */
     public function create()
     {
-        return view('create');
+        return view('images/create');
     }
 
     /**
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
+     * 
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -48,58 +85,62 @@ class ImageController extends Controller
 
         // Save uploaded file to local storage
         $file = $request->file('image');
-        $storage_path = Storage::disk('public')->put('images', $file);
+        $storage_path = \Storage::disk('public')->put('images', $file);
 
         // Store image data to DB
-        $image = new Image([
-            'title' => $request->input('title'),
-            'description' => $request->input('description'),
-            'category' => $request->input('category'),
-            'storage_path' => $storage_path
-        ]);
-        $image->save();
+        $image = new Image($request->input('title'), $request->input('category'), $request->input('description'), $storage_path);
+
+        $this->em->persist($image);
+        $this->em->flush();
 
         $image->create_thumb();
 
-        return redirect('images')->with('status', 'Image Added');
+        return redirect('images')->with(['status' => 'Image Added']);
     }
 
     /**
      * Display the specified resource.
      *
      * @param  int  $id
+     * 
      * @return \Illuminate\Http\Response
      */
     public function show($id)
     {
-        $image = Image::findOrFail($id);
+        $image = $this->em->getRepository(Image::class)->find($id);
+        abort_if(empty($image), 404);
 
-        return view('show')->with(compact('image'));
+        return view('images/show', ['image' => $image]);
     }
 
     /**
      * Show the form for editing the specified resource.
      *
      * @param  int  $id
+     * 
      * @return \Illuminate\Http\Response
      */
     public function edit($id)
     {
-        $image = Image::findOrFail($id);
+        $image = $this->em->getRepository(Image::class)->find($id);
+        abort_if(empty($image), 404);
 
-        return view('edit')->with(compact('image'));
+        return view('images/edit', ['image' => $image]);
     }
 
     /**
      * Update the specified resource in storage.
      *
+     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
+     * 
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, $id)
     {
         // Check image exist
-        $image = Image::findOrFail($id);
+        $image = $this->em->getRepository(Image::class)->find($id);
+        abort_if(empty($image), 404);
 
         $request->validate([
             'title' => 'string|required|max:60',
@@ -108,45 +149,63 @@ class ImageController extends Controller
         ]);
 
         // Update Image data
-        $image->title = $request->input('title');
-        $image->description = $request->input('description');
-        $image->category = $request->input('category');
+        $image->setTitle($request->input('title'));
+        $image->setCategory($request->input('category'));
+        $image->setDescription($request->input('description'));
 
-        $image->save();
+        $this->em->flush();
 
-        return redirect('images')->with('status', 'Image Edited');
+        return redirect('images')->with(['status' => 'Image Edited']);
     }
 
     /**
      * Remove the specified resource from storage.
      *
      * @param  int  $id
+     * 
      * @return \Illuminate\Http\Response
      */
     public function destroy($id)
     {
-        $image = Image::find($id);
-        
+        $image = $this->em->getRepository(Image::class)->find($id);
+        abort_if(empty($image), 404);
+
         // Check if image exists before deleting
         if (!isset($image)){
-            return redirect('/')->with('error', 'No Such Image');
+            return redirect('images')->with(['error' => 'No Such Image']); //TODO edit in master brunch
         }
 
         // Delete Image inctance, image file  and image thumb
-        $image->delete();
+        $this->em->remove($image);
+        $this->em->flush();
 
-        return redirect('images')->with('status', 'Image Removed');
+        return redirect('images')->with(['status' => 'Image Removed']);
     }
+
     /**
      * Perform search query by title.
      *
      * @param  \Illuminate\Http\Request  $request
+     * @param  int  $results_per_page
+     * 
      * @return \Illuminate\Http\Response
      */
-    public function search(Request $request)
+    public function search(Request $request, $results_per_page = 6)
     {
-        $images = Image::where('title', 'LIKE', '%'. $request->q .'%' )->paginate (12);
+        $request->validate([
+            'q' => 'required|max:60',
+            'page' => 'nullable|integer'
+        ]);
 
-        return view('search')->with(['images' => $images, 'search_query' => $request->q]);
+        // Get serched Images
+        $query = $this->em->createQuery('SELECT i FROM App\Entities\Image i WHERE i.title LIKE :q');
+        $query->setParameter('q', '%' . $request->q . '%');
+        $searched_images = $query->getResult();
+        
+        // Create pagination
+        $paginator = $this->get_paginatior($searched_images, $results_per_page, $request->page, ['path' => 'search']);
+        
+        return view('images/search', ['search_query' => $request->q, 'paginator' => $paginator]);
     }
+
 }

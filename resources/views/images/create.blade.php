@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title') {{ config('app.name', 'Laravel') }} - Create New @endsection
+
 @section('content')
 <div class="container">
     <div class="bd-content">
