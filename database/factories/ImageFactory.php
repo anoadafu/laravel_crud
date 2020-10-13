@@ -11,7 +11,7 @@ $factory->define(Image::class, function (Faker $faker) {
     $category = Category::inRandomOrder()->first();
     // Download and save Image from http://lorempixel.com/ with selected category
     $file = $faker->image($dir = storage_path('app/public/images'), $width = 1920, $height = 1080, $category->title);
-    $file_name = explode('\\', $file);
+    $file_name = explode(DIRECTORY_SEPARATOR, $file); 
     $storage_path = 'images/' . end($file_name);
 
     return [
