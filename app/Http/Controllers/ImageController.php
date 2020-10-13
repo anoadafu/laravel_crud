@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Image;
+use App\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -18,7 +19,7 @@ class ImageController extends Controller
         // Add pagination if render more than 10 images
         $images = Image::orderBy('created_at','desc')->paginate(12);
 
-        return view('index')->with(compact('images'));
+        return view('images/index')->with(compact('images'));
     }
 
     /**
@@ -28,7 +29,9 @@ class ImageController extends Controller
      */
     public function create()
     {
-        return view('create');
+        $categories = Category::all();
+
+        return view('images/create')->with(compact('categories'));
     }
 
     /**
@@ -41,8 +44,8 @@ class ImageController extends Controller
     {
         $request->validate([
             'title' => 'string|required|max:60',
-            'description' => 'string|required|max:280',
-            'category' => 'string|required|max:25',
+            'description' => 'string|required|max:255',
+            'category_id' => 'integer|required|exists:categories,id',
             'image' => 'image|required|max:4096', // 4MB Max
         ]);
 
@@ -54,9 +57,10 @@ class ImageController extends Controller
         $image = new Image([
             'title' => $request->input('title'),
             'description' => $request->input('description'),
-            'category' => $request->input('category'),
+            'category_id' => $request->input('category_id'),
             'storage_path' => $storage_path
         ]);
+        $image->set_owner(auth()->user());
         $image->save();
 
         $image->create_thumb();
@@ -70,11 +74,9 @@ class ImageController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Image $image)
     {
-        $image = Image::findOrFail($id);
-
-        return view('show')->with(compact('image'));
+        return view('images/show')->with(compact('image'));
     }
 
     /**
@@ -83,11 +85,13 @@ class ImageController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit(Image $image)
     {
-        $image = Image::findOrFail($id);
+        $this->authorize('update-delete-image', $image);
+        
+        $categories = Category::all();
 
-        return view('edit')->with(compact('image'));
+        return view('images/edit')->with(compact('image', 'categories'));
     }
 
     /**
@@ -96,21 +100,20 @@ class ImageController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Image $image)
     {
-        // Check image exist
-        $image = Image::findOrFail($id);
+        $this->authorize('update-delete-image', $image);
 
         $request->validate([
             'title' => 'string|required|max:60',
-            'description' => 'string|required|max:280',
-            'category' => 'string|required|max:25',
+            'description' => 'string|required|max:255',
+            'category_id' => 'integer|required|exists:categories,id',
         ]);
 
         // Update Image data
         $image->title = $request->input('title');
         $image->description = $request->input('description');
-        $image->category = $request->input('category');
+        $image->category_id = $request->input('category_id');
 
         $image->save();
 
@@ -123,16 +126,11 @@ class ImageController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Image $image)
     {
-        $image = Image::find($id);
-        
-        // Check if image exists before deleting
-        if (!isset($image)){
-            return redirect('/')->with('error', 'No Such Image');
-        }
+        $this->authorize('update-delete-image', $image);
 
-        // Delete Image inctance, image file  and image thumb
+        // Delete Image instance, image file  and image thumb
         $image->delete();
 
         return redirect('images')->with('status', 'Image Removed');
@@ -145,8 +143,8 @@ class ImageController extends Controller
      */
     public function search(Request $request)
     {
-        $images = Image::where('title', 'LIKE', '%'. $request->q .'%' )->paginate (12);
+        $images = Image::where('title', 'LIKE', '%'. $request->q .'%' )->paginate(12);
 
-        return view('search')->with(['images' => $images, 'search_query' => $request->q]);
+        return view('images/search')->with(['images' => $images, 'search_query' => $request->q]);
     }
 }

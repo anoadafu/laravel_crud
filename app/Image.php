@@ -8,7 +8,7 @@ use Intervention\Image\ImageManagerStatic as ImageIntervention;
 
 class Image extends Model
 {
-    protected $fillable = ['title', 'description', 'category', 'storage_path'];
+    protected $fillable = ['title', 'description', 'category_id', 'storage_path'];
 
     /**
      * Return Image URL.
@@ -77,5 +77,20 @@ class Image extends Model
         Storage::disk('public')->delete($this->storage_path);
         // Delete Image instance
         parent::delete();
+    }
+
+    public function category()
+    {
+        return $this->belongsTo( Category::class );
+    }
+
+    public function owner()
+    {
+        return $this->belongsTo( User::class );
+    }
+
+    public function set_owner(User $user)
+    {
+        $this->user_id = $user->id;
     }
 }
