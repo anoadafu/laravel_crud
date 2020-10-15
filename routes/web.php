@@ -26,7 +26,7 @@ Route::get('home', 'HomeController@index')->name('home');
 Route::match(['get', 'post'], 'images/search', 'ImageController@search');
 Route::resource('images', 'ImageController')->except('index', 'show')->middleware('auth');
 Route::resource('images', 'ImageController')->only('index', 'show');
-Route::resource('admin/categories', 'CategoryController');
+Route::resource('admin/categories', 'CategoryController')->except('create', 'edit', 'show');
 Route::get('admin/users', 'UserController@index')->middleware('auth');
 Route::delete('admin/users/{id}', 'UserController@block')->middleware('auth');
 Route::post('admin/users/{id}/restore', 'UserController@restore')->middleware('auth');
